@@ -1,9 +1,0 @@
-{
-  "packages": {
-    ".": {
-      "release-type": "simple",
-      "package-name": "bot-platform-infra"
-    }
-  }
-}
-

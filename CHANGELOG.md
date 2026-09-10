@@ -1,4 +1,3 @@
 # Changelog
 
-All notable changes are recorded here by Release Please from Conventional Commits.
-
+Notable changes are recorded in GitHub Releases generated from Conventional Commits.

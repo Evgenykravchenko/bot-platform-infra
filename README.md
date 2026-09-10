@@ -81,7 +81,7 @@ docker compose \
 ## CI и релизы
 
 - PR и `main` проверяют Compose и JavaScript bootstrap.
-- Release Please собирает changelog и SemVer из Conventional Commits.
+- Workflow `Release` создаёт SemVer tag и GitHub Release с автоматическими notes.
 - Production deployment запускается вручную из GitHub Environment `production`.
 - Self-hosted runner копирует релиз в `/opt`; Compose не запускается из `_work` runner.
 
