@@ -1,0 +1,36 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git tag or commit to deploy
+        required: true
+        default: main
+
+concurrency:
+  group: bot-platform-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, ARM64, bot-platform-prod]
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Validate release
+        run: ./scripts/validate.sh
+      - name: Copy release outside the runner workspace
+        run: |
+          rsync -a --delete \
+            --exclude .git \
+            --exclude .env \
+            ./ /opt/bot-platform-infra/
+      - name: Apply release
+        run: /opt/bot-platform-infra/scripts/deploy.sh
+
