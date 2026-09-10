@@ -29,8 +29,7 @@ jobs:
         run: |
           rsync -a --delete \
             --exclude .git \
-            --exclude .env \
+            --exclude '.env*' \
             ./ /opt/bot-platform-infra/
       - name: Apply release
         run: /opt/bot-platform-infra/scripts/deploy.sh
-
