@@ -42,11 +42,18 @@ async function waitForDirectus() {
 
 async function ensureCollection(collection, meta) {
   try {
-    await request(`/collections/${collection}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ meta: { accountability: 'all', ...meta } }),
-    });
-    return;
+    const existing = await request(`/collections/${collection}`);
+    if (existing.data.schema) {
+      await request(`/collections/${collection}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ meta: { accountability: 'all', ...meta } }),
+      });
+      return;
+    }
+
+    throw new Error(
+      `Collection ${collection} has metadata but no physical table; repair it before retrying`,
+    );
   } catch (error) {
     if (error.status !== 403 && error.status !== 404) throw error;
   }
@@ -493,4 +500,3 @@ await createSchema();
 const { bot } = await ensureInitialBot();
 if (seedDemoContent) await seedDemo(bot);
 console.log('Directus multi-bot schema is ready.');
-

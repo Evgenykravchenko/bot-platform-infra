@@ -69,7 +69,8 @@ Production Compose не публикует `5432`, `6379` и `8055`. Боты о
 ```bash
 docker compose \
   --env-file /etc/bot-platform/infra.env \
-  -f compose.yaml run --rm \
+  -f compose.yaml \
+  -f compose.production.yaml run --rm \
   -e BOT_KEY=catalog-bot \
   -e BOT_NAME="Каталог" \
   cms-bootstrap node /app/create-bot.mjs
