@@ -1,0 +1,123 @@
+name: bot-content-platform
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  database:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging: *default-logging
+    networks: [backend]
+
+  cache:
+    image: redis:8.2-alpine
+    restart: unless-stopped
+    command: [redis-server, --save, "60", "1", --loglevel, warning]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging: *default-logging
+    networks: [backend]
+
+  directus:
+    image: directus/directus:11.17.4
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    environment:
+      SECRET: ${DIRECTUS_SECRET}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+      ADMIN_TOKEN: ${DIRECTUS_TOKEN}
+      DB_CLIENT: pg
+      DB_HOST: database
+      DB_PORT: "5432"
+      DB_DATABASE: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CACHE_ENABLED: "true"
+      CACHE_AUTO_PURGE: "true"
+      CACHE_STORE: redis
+      REDIS: redis://cache:6379/1
+      RATE_LIMITER_ENABLED: "true"
+      RATE_LIMITER_STORE: redis
+      RATE_LIMITER_POINTS: "50"
+      RATE_LIMITER_DURATION: "1"
+      LOGIN_STALL_TIME: "1000"
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL}
+      TELEMETRY: "false"
+      WEBSOCKETS_ENABLED: "true"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:8055/server/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
+    logging: *default-logging
+    networks: [backend, edge]
+
+  cms-bootstrap:
+    image: node:22.18.0-alpine
+    depends_on:
+      directus:
+        condition: service_healthy
+    environment:
+      DIRECTUS_URL: http://directus:8055
+      DIRECTUS_TOKEN: ${DIRECTUS_TOKEN}
+      DIRECTUS_INITIAL_BOT_KEY: ${DIRECTUS_INITIAL_BOT_KEY:-vk-content-bot}
+      DIRECTUS_INITIAL_BOT_NAME: ${DIRECTUS_INITIAL_BOT_NAME:-VK Content Bot}
+      DIRECTUS_SEED_DEMO: ${DIRECTUS_SEED_DEMO:-false}
+    volumes:
+      - ./scripts/bootstrap-directus.mjs:/app/bootstrap-directus.mjs:ro
+      - ./scripts/create-bot.mjs:/app/create-bot.mjs:ro
+    command: [node, /app/bootstrap-directus.mjs]
+    restart: "no"
+    logging: *default-logging
+    networks: [backend]
+
+volumes:
+  postgres_data:
+  redis_data:
+  directus_uploads:
+  directus_extensions:
+  tailscale_state:
+
+networks:
+  backend:
+    name: bot_platform_backend
+    driver: bridge
+    internal: true
+  edge:
+    name: bot_platform_edge
+    driver: bridge

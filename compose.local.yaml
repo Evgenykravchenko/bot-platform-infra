@@ -1,0 +1,5 @@
+services:
+  directus:
+    ports:
+      - "8055:8055"
+
