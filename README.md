@@ -72,7 +72,6 @@ docker compose \
   -f compose.yaml run --rm \
   -e BOT_KEY=catalog-bot \
   -e BOT_NAME="Каталог" \
-  -e DIRECTUS_TOKEN \
   cms-bootstrap node /app/create-bot.mjs
 ```
 
@@ -97,4 +96,3 @@ docker compose \
 - Коммиты следуюют Conventional Commits.
 
 MIT License.
-
