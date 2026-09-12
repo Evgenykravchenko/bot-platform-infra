@@ -14,8 +14,9 @@ Tailscale Funnel ──► Directus
                          ├── PostgreSQL
                          └── Redis
 
-vk-content-bot ────────▲
-future-bot ──────────▲  закрытая Docker-сеть bot_platform_backend
+vk-content-bot ─────────▲
+telegram-service-bot ───▲  закрытая Docker-сеть bot_platform_backend
+instagram-direct-bot ───▲
 ```
 
 | Сервис | Назначение | Доступ снаружи |
@@ -31,6 +32,7 @@ future-bot ──────────▲  закрытая Docker-сеть b
 
 - `bot-platform-infra` владеет CMS, её базой, Redis, сетями и Tailscale.
 - `vk-content-bot` содержит только код бота, тесты, Docker image и application Compose.
+- `telegram-service-bot` и `instagram-direct-bot` используют ту же CMS через свой `CONTENT_BOT_KEY`.
 - Новая тематика в том же движке — это новая запись `content_bots`, а не новая база.
 - Новый репозиторий бота нужен только при другой бизнес-логике.
 
@@ -73,6 +75,7 @@ docker compose \
   -f compose.production.yaml run --rm \
   -e BOT_KEY=catalog-bot \
   -e BOT_NAME="Каталог" \
+  -e BOT_PLATFORM=instagram \
   cms-bootstrap node /app/create-bot.mjs
 ```
 
@@ -94,6 +97,6 @@ docker compose \
 - Каждый бот получает уникальный `CONTENT_BOT_KEY`.
 - Порты stateful-сервисов не открываются на хосте.
 - BotCRM и сторонние Compose-проекты не подключаются к сетям CMS.
-- Коммиты следуюют Conventional Commits.
+- Коммиты следуют Conventional Commits.
 
 MIT License.

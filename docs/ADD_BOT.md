@@ -17,7 +17,7 @@ course-support
 В Directus:
 
 1. Откройте **Content Bots**.
-2. Заполните `Name`, `Key` и выберите `Active`.
+2. Заполните `Name`, `Key`, выберите платформу и `Active`.
 3. Откройте **Bot Settings**.
 4. Создайте ровно одну запись настроек для нового бота.
 5. Задайте текст для неизвестной команды.
@@ -32,7 +32,21 @@ DIRECTUS_URL=http://directus:8055
 DIRECTUS_TOKEN=replace-on-server
 ```
 
-Один Directus и одна база обслуживают всех ботов. Каждый процесс фильтрует данны по `CONTENT_BOT_KEY`.
+Один Directus и одна база обслуживают всех ботов. Каждый процесс фильтрует данные по `CONTENT_BOT_KEY`.
+
+Автоматизированный вариант для администратора:
+
+```shell
+BOT_KEY=fitness-club \
+BOT_NAME='Fitness Club' \
+BOT_PLATFORM=instagram \
+DIRECTUS_URL=https://cms.example.ts.net \
+DIRECTUS_TOKEN=replace-on-server \
+node scripts/create-bot.mjs
+```
+
+`BOT_PLATFORM` принимает `vk`, `telegram`, `instagram` или `other`. Главным ключом
+изоляции остаётся уникальный `BOT_KEY`.
 
 Для Telegram-бота с подготовкой файлов также задаются:
 
@@ -63,3 +77,11 @@ TELEGRAM_MEDIA_CHAT_ID=
 ```text
 Яндекс Диск → queued → processing → ready → telegram_file_id
 ```
+
+Для Instagram-медиа:
+
+```text
+Яндекс Диск → queued → Meta Attachment Upload → media_deliveries → ready
+```
+
+`media_deliveries` — техническая коллекция. Редактор контента её не заполняет.
