@@ -256,6 +256,12 @@ async function createSchema() {
     display_template: '{{label}}',
     sort_field: 'sort',
   });
+  await ensureCollection('media_deliveries', {
+    icon: 'cloud_done',
+    note: 'Технические идентификаторы медиа после подготовки для каждой платформы',
+    display_template: '{{platform}} — {{status}}',
+    hidden: true,
+  });
 
   const fields = {
     content_bots: [
@@ -264,6 +270,17 @@ async function createSchema() {
         unique: true,
       }),
       stringField('name', 'Понятное название бота', { required: true }),
+      selectField(
+        'platform',
+        'Канал, в котором работает бот',
+        [
+          ['VK', 'vk'],
+          ['Telegram', 'telegram'],
+          ['Instagram', 'instagram'],
+          ['Другое', 'other'],
+        ],
+        'other',
+      ),
       selectField(
         'status',
         'Активный бот может читать контент',
@@ -408,6 +425,57 @@ async function createSchema() {
       integerField('sort', 'Порядок внутри ряда', 10),
       booleanField('enabled', 'Кнопка включена', true),
     ],
+    media_deliveries: [
+      relationField('media', 'Исходный материал', '{{name}}', true),
+      selectField(
+        'platform',
+        'Платформа, для которой подготовлен материал',
+        [
+          ['VK', 'vk'],
+          ['Telegram', 'telegram'],
+          ['Instagram', 'instagram'],
+          ['Другое', 'other'],
+        ],
+        'other',
+      ),
+      selectField(
+        'status',
+        'Состояние подготовки на платформе',
+        [
+          ['В очереди', 'queued'],
+          ['Обрабатывается', 'processing'],
+          ['Готов', 'ready'],
+          ['Ошибка', 'error'],
+        ],
+        'queued',
+      ),
+      stringField('external_reference', 'Готовый ID вложения на платформе', {
+        maxLength: 1024,
+      }),
+      textField('error_message', 'Последняя ошибка подготовки'),
+      {
+        field: 'prepared_at',
+        type: 'timestamp',
+        meta: {
+          interface: 'datetime',
+          note: 'Когда вложение было подготовлено',
+          readonly: true,
+          width: 'half',
+        },
+        schema: { is_nullable: true },
+      },
+      {
+        field: 'expires_at',
+        type: 'timestamp',
+        meta: {
+          interface: 'datetime',
+          note: 'Когда ID нужно подготовить заново',
+          readonly: true,
+          width: 'half',
+        },
+        schema: { is_nullable: true },
+      },
+    ],
   };
 
   for (const [collection, definitions] of Object.entries(fields)) {
@@ -424,6 +492,7 @@ async function createSchema() {
     ['response_blocks', 'response', 'responses', 'CASCADE'],
     ['response_blocks', 'media', 'media_assets', 'SET NULL'],
     ['response_buttons', 'response', 'responses', 'CASCADE'],
+    ['media_deliveries', 'media', 'media_assets', 'CASCADE'],
   ];
   for (const relation of relations) await ensureRelation(...relation);
 }
@@ -467,6 +536,26 @@ async function ensureInitialBot() {
   return { bot, settings };
 }
 
+async function backfillBotPlatforms() {
+  const result = await request('/items/content_bots?fields=id,key,platform&limit=-1');
+  for (const bot of result.data) {
+    if (bot.platform && bot.platform !== 'other') continue;
+    const platform = bot.key.startsWith('vk-')
+      ? 'vk'
+      : bot.key.startsWith('telegram-')
+        ? 'telegram'
+        : bot.key.startsWith('instagram-')
+          ? 'instagram'
+          : null;
+    if (!platform) continue;
+    await request(`/items/content_bots/${bot.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ platform }),
+    });
+    console.log(`Set platform for ${bot.key}: ${platform}`);
+  }
+}
+
 async function seedDemo(bot) {
   let response = await findFirst('responses', { bot: bot.id, name: 'Справка по боту' });
   if (!response) {
@@ -504,6 +593,7 @@ async function seedDemo(bot) {
 await waitForDirectus();
 await configureProject();
 await createSchema();
+await backfillBotPlatforms();
 const { bot } = await ensureInitialBot();
 if (seedDemoContent) await seedDemo(bot);
 console.log('Directus multi-bot schema is ready.');

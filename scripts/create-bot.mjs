@@ -2,12 +2,16 @@ const baseUrl = process.env.DIRECTUS_URL ?? 'http://localhost:8055';
 const token = process.env.DIRECTUS_TOKEN;
 const key = process.env.BOT_KEY;
 const name = process.env.BOT_NAME;
+const platform = process.env.BOT_PLATFORM ?? 'other';
 
 if (!token) throw new Error('DIRECTUS_TOKEN is required');
 if (!key || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(key)) {
   throw new Error('BOT_KEY must contain lowercase letters, digits and single hyphens');
 }
 if (!name?.trim()) throw new Error('BOT_NAME is required');
+if (!['vk', 'telegram', 'instagram', 'other'].includes(platform)) {
+  throw new Error('BOT_PLATFORM must be vk, telegram, instagram or other');
+}
 
 async function request(path, init = {}) {
   const response = await fetch(new URL(path, baseUrl), {
@@ -32,7 +36,7 @@ if (existing.data[0]) {
 
 const created = await request('/items/content_bots', {
   method: 'POST',
-  body: JSON.stringify({ key, name: name.trim(), status: 'active' }),
+  body: JSON.stringify({ key, name: name.trim(), platform, status: 'active' }),
 });
 
 await request('/items/bot_settings', {
@@ -44,4 +48,3 @@ await request('/items/bot_settings', {
 });
 
 console.log(`Created bot: ${key} (${created.data.id})`);
-
