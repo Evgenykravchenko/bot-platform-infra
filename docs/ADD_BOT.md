@@ -34,6 +34,15 @@ DIRECTUS_TOKEN=replace-on-server
 
 Один Directus и одна база обслуживают всех ботов. Каждый процесс фильтрует данны по `CONTENT_BOT_KEY`.
 
+Для Telegram-бота с подготовкой файлов также задаются:
+
+```dotenv
+YANDEX_DISK_TOKEN=replace-on-server
+TELEGRAM_MEDIA_CHAT_ID=-1000000000000
+```
+
+`TELEGRAM_MEDIA_CHAT_ID` — закрытая техническая группа, куда worker один раз загружает файл и получает постоянный `file_id`.
+
 ## 4. Заполните контент
 
 При создании `Responses`, `Keywords` и `Media Assets` всегда выбирайте нужного бота. Блоки и кнопки получают владельца через связанный ответ.
@@ -49,3 +58,8 @@ DIRECTUS_TOKEN=replace-on-server
 - каждый используемый тип медиа;
 - что другой бот не видит эти ключевые слова.
 
+Для Telegram-медиа дополнительно проверьте цепочку:
+
+```text
+Яндекс Диск → queued → processing → ready → telegram_file_id
+```
