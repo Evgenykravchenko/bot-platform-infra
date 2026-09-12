@@ -38,10 +38,10 @@ DIRECTUS_TOKEN=replace-on-server
 
 ```dotenv
 YANDEX_DISK_TOKEN=replace-on-server
-TELEGRAM_MEDIA_CHAT_ID=-1000000000000
+TELEGRAM_MEDIA_CHAT_ID=
 ```
 
-`TELEGRAM_MEDIA_CHAT_ID` — закрытая техническая группа, куда worker один раз загружает файл и получает постоянный `file_id`.
+Если `TELEGRAM_MEDIA_CHAT_ID` пуст, worker использует закрытую группу заявок из `TELEGRAM_ADMIN_CHAT_ID`: один раз загружает файл, сохраняет постоянный `file_id` и удаляет техническое сообщение. Отдельная группа не требуется.
 
 ## 4. Заполните контент
 
