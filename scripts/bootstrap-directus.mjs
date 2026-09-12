@@ -236,7 +236,7 @@ async function createSchema() {
   });
   await ensureCollection('media_assets', {
     icon: 'perm_media',
-    note: 'Исходники на Яндекс Диске и готовые VK-вложения',
+    note: 'Исходники на Яндекс Диске и готовые идентификаторы платформ',
     display_template: '{{name}} — {{status}}',
   });
   await ensureCollection('keywords', {
@@ -303,7 +303,7 @@ async function createSchema() {
       stringField('name', 'Понятное название материала', { required: true }),
       selectField(
         'kind',
-        'Как материал будет загружен во VK',
+        'Как материал будет отправлен пользователю',
         [
           ['Фотография', 'photo'],
           ['Видео', 'video'],
@@ -325,7 +325,14 @@ async function createSchema() {
         ],
         'draft',
       ),
-      stringField('vk_attachment', 'Готовый VK ID'),
+      stringField('vk_attachment', 'Готовый VK ID — только для VK-ботов'),
+      stringField('telegram_file_id', 'Готовый Telegram file_id — только для Telegram-ботов', {
+        maxLength: 1024,
+      }),
+      stringField(
+        'telegram_file_unique_id',
+        'Стабильный Telegram ID для диагностики; не используется для отправки',
+      ),
       stringField('mime_type', 'MIME-тип', { width: 'half' }),
       {
         field: 'file_size',
@@ -368,7 +375,7 @@ async function createSchema() {
         ],
         'text',
       ),
-      textField('body', 'Текст блока'),
+      textField('body', 'Текст блока; для старого медиа без Media Asset — URL или file_id'),
       relationField('media', 'Подготовленный материал', '{{name}} — {{status}}'),
       booleanField('send_separately', 'Отправить отдельным сообщением', false),
       booleanField('enabled', 'Блок включён', true),
