@@ -7,6 +7,9 @@
   "Web": {
     "${TS_CERT_DOMAIN}:443": {
       "Handlers": {
+        "/vk-oauth/": {
+          "Proxy": "http://vk-oauth-callback:8787"
+        },
         "/": {
           "Proxy": "http://directus:8055"
         }
