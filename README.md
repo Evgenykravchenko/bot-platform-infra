@@ -25,6 +25,7 @@ instagram-direct-bot ───▲
 | PostgreSQL | Постоянные данные CMS | нет |
 | Redis | Кеш и rate limiting Directus | нет |
 | Schema bootstrap | Идемпотентно обновляет схему | нет |
+| VK OAuth callback | Одноразово принимает код авторизации для загрузки видео | только `/vk-oauth/` через Funnel |
 
 Яндекс Диск не является backup-хранилищем. Он используется ботами только как источник тяжёлых медиа.
 
@@ -65,6 +66,12 @@ ENV_FILE=/etc/bot-platform/infra.env ./scripts/deploy.sh
 ```
 
 Production Compose не публикует `5432`, `6379` и `8055`. Боты обращаются к `http://directus:8055` по сети `bot_platform_backend`.
+
+### Временный callback VK OAuth
+
+Маршрут `https://<TAILSCALE_HOSTNAME>.<tailnet>.ts.net/vk-oauth/callback` обслуживается отдельным изолированным контейнером. Он не меняет корневой маршрут Directus и принимает код только при совпадении одноразового `state` из `VK_OAUTH_STATE`.
+
+Код сохраняется в закрытом Docker volume и не выводится в логи. После завершения авторизации результат нужно удалить, а `VK_OAUTH_STATE` заменить перед следующим запуском OAuth.
 
 ## Добавление бота
 

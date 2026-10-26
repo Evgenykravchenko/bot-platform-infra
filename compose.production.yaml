@@ -1,4 +1,39 @@
 services:
+  vk-oauth-callback:
+    image: node:22.18.0-alpine
+    restart: unless-stopped
+    command: [node, /app/vk-oauth-callback.mjs]
+    environment:
+      PORT: "8787"
+      VK_OAUTH_STATE: ${VK_OAUTH_STATE:-disabled}
+      VK_OAUTH_RESULT_FILE: /data/callback.json
+    volumes:
+      - ./scripts/vk-oauth-callback.mjs:/app/vk-oauth-callback.mjs:ro
+      - vk_oauth_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
+        max-file: "2"
+    networks: [edge]
+
   tailscale:
     image: tailscale/tailscale:stable@sha256:8c42c4574ab066384fcb72f69e086a2ff1dd3652eb6f56856cee34bcf0d2f680
     hostname: ${TAILSCALE_HOSTNAME:-bot-content-cms}
@@ -6,6 +41,8 @@ services:
     depends_on:
       cms-bootstrap:
         condition: service_completed_successfully
+      vk-oauth-callback:
+        condition: service_healthy
     environment:
       TS_AUTH_ONCE: "true"
       TS_BOOT_TIMEOUT: 10m
@@ -24,3 +61,6 @@ services:
         max-size: 10m
         max-file: "3"
     networks: [edge]
+
+volumes:
+  vk_oauth_data:
