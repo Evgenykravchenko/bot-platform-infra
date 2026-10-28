@@ -7,6 +7,10 @@ services:
       PORT: "8787"
       VK_OAUTH_STATE: ${VK_OAUTH_STATE:-disabled}
       VK_OAUTH_RESULT_FILE: /data/callback.json
+      VK_OAUTH_TOKEN_RESULT_FILE: /data/token.json
+      VK_OAUTH_CLIENT_ID: ${VK_OAUTH_CLIENT_ID:-}
+      VK_OAUTH_REDIRECT_URI: ${VK_OAUTH_REDIRECT_URI:-}
+      VK_OAUTH_CODE_VERIFIER: ${VK_OAUTH_CODE_VERIFIER:-}
     volumes:
       - ./scripts/vk-oauth-callback.mjs:/app/vk-oauth-callback.mjs:ro
       - vk_oauth_data:/data
