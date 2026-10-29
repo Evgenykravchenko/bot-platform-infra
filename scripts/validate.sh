@@ -9,6 +9,8 @@ docker compose --env-file "$env_file" -f "$repo_dir/compose.yaml" -f "$repo_dir/
 docker compose --env-file "$env_file" -f "$repo_dir/compose.yaml" -f "$repo_dir/compose.production.yaml" config --quiet
 "$node_bin" --check "$repo_dir/scripts/bootstrap-directus.mjs"
 "$node_bin" --check "$repo_dir/scripts/vk-oauth-callback.mjs"
+sh -n "$repo_dir/scripts/deploy-botcrm.sh"
+"$node_bin" --test "$repo_dir/tests/deploy-botcrm.test.mjs"
 
 echo "Infrastructure configuration is valid."
 
