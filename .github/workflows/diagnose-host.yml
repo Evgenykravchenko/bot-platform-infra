@@ -1,0 +1,27 @@
+name: Diagnose Raspberry connectivity
+on:
+  workflow_dispatch:
+    inputs:
+      client_ipv4:
+        description: Private LAN IPv4 of the SSH client
+        default: '192.168.31.196'
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: bot-platform-host-diagnostics
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, ARM64, bot-platform-prod]
+    environment: production
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Read SSH and LAN health without changing the host
+        env:
+          DIAGNOSTIC_CLIENT_IPV4: ${{ inputs.client_ipv4 }}
+        run: node scripts/diagnose-host.mjs
